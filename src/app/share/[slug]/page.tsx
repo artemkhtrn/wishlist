@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getAuth } from "@/lib/auth";
@@ -34,7 +35,7 @@ export default async function SharePage({
   return (
     <div className="min-h-screen">
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-        <span className="text-xl font-bold text-violet-600 tracking-tight">Wishlist</span>
+        <Image src="/wishly_logo.png" alt="Wishly" width={80} height={21} className="h-[28px] w-auto" />
         <Link href="/dashboard" className="text-sm text-violet-600 hover:text-violet-800 font-medium">
           {isOwner ? "My wishlist" : "Create your own →"}
         </Link>

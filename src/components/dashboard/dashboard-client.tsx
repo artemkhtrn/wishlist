@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Modal } from "@/components/ui/modal";
 import { GiftCard, CARD_COLORS } from "@/components/gifts/gift-card";
 import { AddGiftModal } from "@/components/gifts/add-gift-modal";
@@ -9,6 +11,12 @@ import { ShareButton } from "@/components/occasions/share-button";
 import type { Occasion, Gift } from "@/types";
 
 type OccasionFull = Occasion & { gifts: Gift[] };
+
+interface FollowedPerson {
+  slug: string;
+  userName: string;
+  occasionName: string;
+}
 
 interface DashboardClientProps {
   userId: string;
@@ -25,11 +33,37 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-// Stable per-gift color: deterministic so colors don't shift on re-render
 function giftColor(id: string) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
   return CARD_COLORS[h % CARD_COLORS.length];
+}
+
+function parseSlug(input: string): string | null {
+  try {
+    const url = new URL(input);
+    const match = url.pathname.match(/\/share\/([^/]+)/);
+    if (match) return match[1];
+  } catch {
+    // not a URL — treat as slug directly
+  }
+  const plain = input.trim().replace(/^\/+/, "");
+  if (plain && !plain.includes("/")) return plain;
+  return null;
+}
+
+const STORAGE_KEY = "wishly_followed";
+
+function loadFollowed(): FollowedPerson[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveFollowed(list: FollowedPerson[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
 export function DashboardClient({ userName, initialOccasions }: DashboardClientProps) {
@@ -38,6 +72,12 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
   const [addGiftOpen, setAddGiftOpen] = useState(false);
   const [newOccasionOpen, setNewOccasionOpen] = useState(false);
   const [editGift, setEditGift] = useState<Gift | null>(null);
+  const [addPersonOpen, setAddPersonOpen] = useState(false);
+  const [followed, setFollowed] = useState<FollowedPerson[]>([]);
+
+  useEffect(() => {
+    setFollowed(loadFollowed());
+  }, []);
 
   const allGifts = occasions.flatMap((o) => o.gifts);
   const filteredGifts = selectedId
@@ -100,32 +140,59 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
     setNewOccasionOpen(false);
   };
 
+  const onPersonAdded = (person: FollowedPerson) => {
+    setFollowed((prev) => {
+      const next = prev.some((p) => p.slug === person.slug) ? prev : [...prev, person];
+      saveFollowed(next);
+      return next;
+    });
+    setAddPersonOpen(false);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f5f5f7]">
       {/* ── Sidebar (desktop only) ── */}
       <aside className="hidden md:flex w-[280px] bg-white border-r border-gray-100 flex-col px-5 py-6 shrink-0">
-        {/* App name */}
         <div className="mb-8">
-          <p className="text-[15px] font-bold text-gray-900 leading-none">Wishlist</p>
+          <Image src="/wishly_logo.png" alt="Wishly" width={80} height={21} className="h-[28px] w-auto" />
           <p className="text-xs text-gray-400 mt-1">shared gift lists</p>
         </div>
 
-        {/* People label */}
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.1em] mb-3">
           People
         </p>
 
-        {/* People list */}
         <div className="flex-1 flex flex-col gap-0.5 overflow-y-auto min-h-0">
+          {/* Current user */}
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#ede9fe]">
             <div className="w-8 h-8 rounded-full bg-[#c4b5fd] text-violet-800 text-xs font-bold flex items-center justify-center shrink-0 select-none">
               {userInits}
             </div>
             <span className="text-sm font-semibold text-violet-800 truncate">{userName}</span>
           </div>
+
+          {/* Followed people */}
+          {followed.map((p) => (
+            <Link
+              key={p.slug}
+              href={`/share/${p.slug}`}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center shrink-0 select-none">
+                {initials(p.userName)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-700 truncate">{p.userName}</p>
+                <p className="text-xs text-gray-400 truncate">{p.occasionName}</p>
+              </div>
+            </Link>
+          ))}
         </div>
 
-        <button className="mt-5 w-full border border-gray-200 rounded-xl py-2.5 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+        <button
+          onClick={() => setAddPersonOpen(true)}
+          className="mt-5 w-full border border-gray-200 rounded-xl py-2.5 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+        >
           + add person
         </button>
       </aside>
@@ -238,6 +305,77 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
       <Modal open={newOccasionOpen} onClose={() => setNewOccasionOpen(false)} title="New occasion">
         <NewOccasionForm onClose={() => setNewOccasionOpen(false)} onCreated={onOccasionCreated} />
       </Modal>
+
+      <Modal open={addPersonOpen} onClose={() => setAddPersonOpen(false)} title="Add person">
+        <AddPersonForm onAdd={onPersonAdded} onClose={() => setAddPersonOpen(false)} />
+      </Modal>
     </div>
+  );
+}
+
+function AddPersonForm({
+  onAdd,
+  onClose,
+}: {
+  onAdd: (person: FollowedPerson) => void;
+  onClose: () => void;
+}) {
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    const slug = parseSlug(input);
+    if (!slug) {
+      setError("Paste a valid Wishly share link or slug.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/share/${slug}`);
+      if (!res.ok) {
+        setError("Wishlist not found. Check the link and try again.");
+        return;
+      }
+      const data = await res.json();
+      onAdd(data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Share link</label>
+        <input
+          type="text"
+          placeholder="https://wishly.app/share/…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          autoFocus
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-violet-400 transition-colors"
+        />
+        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!input.trim() || loading}
+          className="flex-1 bg-violet-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50"
+        >
+          {loading ? "Looking up…" : "Add"}
+        </button>
+      </div>
+    </form>
   );
 }

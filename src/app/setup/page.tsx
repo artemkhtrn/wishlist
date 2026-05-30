@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function SetupPage() {
@@ -34,9 +35,8 @@ export default function SetupPage() {
     <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="text-4xl">🎁</span>
-          <h1 className="mt-3 text-xl font-bold text-gray-900">Welcome to Wishlist</h1>
-          <p className="mt-1 text-sm text-gray-500">What should we call you?</p>
+          <Image src="/wishly_logo.png" alt="Wishly" width={120} height={32} className="h-10 w-auto mx-auto" />
+          <p className="mt-3 text-sm text-gray-500">What should we call you?</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

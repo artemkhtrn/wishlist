@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { GiftCard, CARD_COLORS } from "@/components/gifts/gift-card";
 import { AddGiftModal } from "@/components/gifts/add-gift-modal";
 import { NewOccasionForm } from "@/components/occasions/new-occasion-form";
+import { ShareButton } from "@/components/occasions/share-button";
 import type { Occasion, Gift } from "@/types";
 
 type OccasionFull = Occasion & { gifts: Gift[] };
@@ -101,8 +102,8 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f5f5f7]">
-      {/* ── Sidebar ── */}
-      <aside className="w-[280px] bg-white border-r border-gray-100 flex flex-col px-5 py-6 shrink-0">
+      {/* ── Sidebar (desktop only) ── */}
+      <aside className="hidden md:flex w-[280px] bg-white border-r border-gray-100 flex-col px-5 py-6 shrink-0">
         {/* App name */}
         <div className="mb-8">
           <p className="text-[15px] font-bold text-gray-900 leading-none">Wishlist</p>
@@ -116,7 +117,6 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
 
         {/* People list */}
         <div className="flex-1 flex flex-col gap-0.5 overflow-y-auto min-h-0">
-          {/* Current user — selected */}
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#ede9fe]">
             <div className="w-8 h-8 rounded-full bg-[#c4b5fd] text-violet-800 text-xs font-bold flex items-center justify-center shrink-0 select-none">
               {userInits}
@@ -125,47 +125,53 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
           </div>
         </div>
 
-        {/* Add person */}
         <button className="mt-5 w-full border border-gray-200 rounded-xl py-2.5 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">
           + add person
         </button>
       </aside>
 
       {/* ── Main panel ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Top header */}
-        <header className="bg-white border-b border-gray-100 px-7 py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#c4b5fd] text-violet-800 text-sm font-bold flex items-center justify-center shrink-0 select-none">
+        <header className="bg-white border-b border-gray-100 px-4 md:px-7 py-3 md:py-4 flex items-center justify-between shrink-0 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#c4b5fd] text-violet-800 text-sm font-bold flex items-center justify-center shrink-0 select-none">
               {userInits}
             </div>
-            <div>
-              <p className="font-semibold text-gray-900 text-[15px] leading-snug">{userName}</p>
-              <p className="text-xs text-gray-400">
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900 text-[14px] md:text-[15px] leading-snug truncate">{userName}</p>
+              <p className="text-xs text-gray-400 hidden sm:block">
                 {allGifts.length} {allGifts.length === 1 ? "wish" : "wishes"} across{" "}
                 {occasions.length} {occasions.length === 1 ? "occasion" : "occasions"}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={() => { setEditGift(null); setAddGiftOpen(true); }}
-            className="border border-gray-200 rounded-2xl px-5 py-2 text-[13px] font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
-          >
-            + add wish
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {selectedId && (() => {
+              const occ = occasions.find((o) => o.id === selectedId);
+              return occ?.isPublic ? <ShareButton slug={occ.shareSlug} /> : null;
+            })()}
+            <button
+              onClick={() => { setEditGift(null); setAddGiftOpen(true); }}
+              className="border border-gray-200 rounded-2xl px-3 md:px-5 py-2 text-[13px] font-semibold text-gray-800 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">+ add wish</span>
+              <span className="sm:hidden">+ wish</span>
+            </button>
+          </div>
         </header>
 
         {/* Occasion tabs */}
-        <div className="bg-white border-b border-gray-100 px-7 flex items-end gap-0 shrink-0 overflow-x-auto">
+        <div className="bg-white border-b border-gray-100 px-2 md:px-7 flex items-end gap-0 shrink-0 overflow-x-auto">
           {([{ id: null as null, name: "All" }] as { id: string | null; name: string }[])
             .concat(occasions)
             .map((o) => (
               <button
                 key={o.id ?? "all"}
                 onClick={() => setSelectedId(o.id)}
-                className={`px-4 py-3.5 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors ${
+                className={`px-3 md:px-4 py-3 md:py-3.5 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors ${
                   selectedId === o.id
                     ? "border-violet-600 text-violet-700"
                     : "border-transparent text-gray-500 hover:text-gray-800"
@@ -176,14 +182,14 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
             ))}
           <button
             onClick={() => setNewOccasionOpen(true)}
-            className="px-4 py-3.5 text-[13px] text-gray-400 hover:text-gray-600 transition-colors whitespace-nowrap border-b-2 border-transparent"
+            className="px-3 md:px-4 py-3 md:py-3.5 text-[13px] text-gray-400 hover:text-gray-600 transition-colors whitespace-nowrap border-b-2 border-transparent"
           >
-            + new occasion
+            + new
           </button>
         </div>
 
         {/* Gift grid */}
-        <main className="flex-1 overflow-y-auto p-7">
+        <main className="flex-1 overflow-y-auto p-4 md:p-7">
           {filteredGifts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-4">
               <span className="text-5xl">🎁</span>
@@ -202,7 +208,7 @@ export function DashboardClient({ userName, initialOccasions }: DashboardClientP
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {filteredGifts.map((gift) => (
                 <GiftCard
                   key={gift.id}

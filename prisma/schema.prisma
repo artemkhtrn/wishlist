@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String     @id
+  name      String?
+  imageUrl  String?
+  occasions Occasion[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Occasion {
+  id        String       @id @default(cuid())
+  name      String
+  type      OccasionType @default(CUSTOM)
+  date      DateTime?
+  isPublic  Boolean      @default(true)
+  shareSlug String       @unique @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gifts     Gift[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Gift {
+  id         String     @id @default(cuid())
+  title      String
+  price      Float?
+  currency   String     @default("USD")
+  shopUrl    String?
+  imageUrl   String?
+  notes      String?
+  priority   Int        @default(0)
+  status     GiftStatus @default(AVAILABLE)
+  reservedBy     String?
+  reservedByName String?
+  occasionId     String
+  occasion   Occasion   @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+enum OccasionType {
+  BIRTHDAY
+  CHRISTMAS
+  WEDDING
+  BABY_SHOWER
+  ANNIVERSARY
+  GRADUATION
+  CUSTOM
+}
+
+enum GiftStatus {
+  AVAILABLE
+  RESERVED
+  PURCHASED
+}

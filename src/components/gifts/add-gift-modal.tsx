@@ -18,7 +18,7 @@ interface AddGiftModalProps {
 const EMPTY_FORM = {
   title: "",
   price: "",
-  currency: "EUR",
+  currency: "USD",
   shopUrl: "",
   imageUrl: "",
   notes: "",
@@ -222,7 +222,7 @@ export function AddGiftModal({ open, onClose, occasionId, occasions, editGift, o
                   onChange={(e) => set("currency", e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
-                  {["EUR", "USD", "GBP", "JPY", "CAD", "AUD"].map((c) => (
+                  {["EUR", "USD", "GBP", "RUB"].map((c) => (
                     <option key={c}>{c}</option>
                   ))}
                 </select>

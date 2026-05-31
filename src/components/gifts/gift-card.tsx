@@ -43,6 +43,7 @@ export function GiftCard({
   const [reserving, setReserving] = useState(false);
   const [reserverName, setReserverName] = useState("");
   const [showWho, setShowWho] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   const price =
     gift.price != null
@@ -133,7 +134,19 @@ export function GiftCard({
           <p className="text-xs text-gray-400 mb-1">{shopDomain}</p>
         )}
         {gift.notes && (
-          <p className="text-xs text-gray-500 line-clamp-1">{gift.notes}</p>
+          <div>
+            <p className={`text-xs text-gray-500 ${showNotes ? "" : "line-clamp-2"}`}>
+              {gift.notes}
+            </p>
+            {gift.notes.length > 80 && (
+              <button
+                onClick={() => setShowNotes((v) => !v)}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-0.5"
+              >
+                {showNotes ? "show less" : "show more"}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Reserved-by reveal */}
